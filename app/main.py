@@ -19,8 +19,16 @@ st.set_page_config(page_title="KhataSaathi AI", page_icon="📈", layout="wide")
 # Custom CSS for professional look
 st.markdown("""
     <style>
-    .main { background-color: #f8f9fa; }
-    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    [data-testid="stMetric"] {
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
+        padding: 15px;
+        border-radius: 10px;
+        border: 1px solid var(--text-color);
+    }
+    [data-testid="stMetricLabel"], [data-testid="stMetricValue"] {
+        color: var(--text-color);
+    }
     .stDataFrame { border-radius: 10px; }
     .stAlert { border-radius: 10px; }
     </style>
