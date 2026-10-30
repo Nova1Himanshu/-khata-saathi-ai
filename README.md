@@ -1,57 +1,46 @@
-# KhataSaathi AI - Intelligent Retail Ledger Assistant
+# 📈 KhataSaathi AI — Intelligent Retail Ledger Assistant
 
-**Tagline:** From handwritten registers to intelligent business decisions.
+**From handwritten registers to intelligent business decisions.**
 
-Built for Hacktoberfest Hack Day 2026 at NIAT-VGU Jaipur.
+## Overview
+KhataSaathi AI helps small retailers understand sales, customer credit, payments, and inventory using a Streamlit dashboard and Gemma 4 through Ollama.
 
-## 🌟 Overview
-KhataSaathi AI is an offline-first, AI-powered retail intelligence application designed for small Indian retailers. It transforms traditional ledger records into actionable business insights using Google's Gemma 4 model.
+## Key Features
+- **Smart Register Scan:** Capture a ledger photo using a camera or upload an image. Review and edit extracted transactions before saving them.
+- **Business Dashboard:** Sales, outstanding credit, payments, and low-stock alerts.
+- **Customer Credit:** Customer balances and transaction histories.
+- **AI Copilot:** Ask business questions in Hindi or English using calculated ledger summaries.
+- **Local CSV Storage:** Ledger calculations and storage work locally. The configured cloud AI requires internet and may send business summaries and images to the provider.
+- **Automatic Demo Setup:** Synthetic records are generated when no ledger files exist. Partial existing datasets are preserved and require restoration.
 
-## 🚀 Key Features
-- **Business Dashboard:** Real-time KPIs for sales, outstanding credit, and stock alerts.
-- **Credit Intelligence:** Detailed tracking of customer debts with transaction-level evidence.
-- **Inventory Management:** Automatic low-stock detection and restocking alerts.
-- **AI Copilot:** A bilingual (Hindi/English) assistant powered by Gemma 4 to answer complex business questions.
-- **Data Independence:** Local CSV-based storage ensuring privacy and offline capability.
-
-## 🛠️ Tech Stack
-- **Frontend:** Streamlit
-- **Data Processing:** Pandas, NumPy
-- **AI Engine:** Ollama + Gemma 4 (`gemma4:31b-cloud` or similar)
-- **Language:** Python 3.x
-
-## 🚀 Quick Start (AI Setup)
+## Quick Start
 1. Install Python and [Ollama](https://ollama.com/).
-2. Prepare the configured model:
+2. Prepare the model:
    ```bash
    ollama pull gemma4:31b-cloud
    ollama run gemma4:31b-cloud
    ```
-   Sign in to Ollama if prompted. This cloud model requires internet access.
-3. From the repository root, launch:
+   Sign in if prompted and keep Ollama running.
+3. Install dependencies from the repository root:
    ```bash
    pip install -r requirements.txt
+   ```
+4. Launch:
+   ```bash
    streamlit run app/main.py
    ```
-   The app generates synthetic business data automatically when no ledger files exist.
-   Existing partial datasets must be restored rather than overwritten.
+   Sample business data is created automatically on an empty first run. Allow camera access when prompted; camera availability depends on the browser and device.
 
-## 📊 Demo Script for Judges
-1. **Launch:** Open the app and show the **Dashboard**.
-2. **Insight:** Point out the "Net Outstanding" amount and "Low Stock Items".
-3. **Deep Dive:** Go to **Customer Credit**, select a top debtor, and show their transaction history.
-4. **AI Interaction (English):** Ask "Who owes the most money?" $\rightarrow$ AI identifies the top debtor.
-5. **AI Interaction (Hindi):** Ask "Mere customers par kitna paisa pending hai?" $\rightarrow$ AI reports total net outstanding.
-6. **Action:** Ask "Draft a polite payment reminder for Rajesh Kumar" $\rightarrow$ AI generates a professional draft.
-7. **Inventory:** Show the **Inventory** page with highlighted low-stock items.
+## OCR Review and Limits
+OCR is experimental. Verify every extracted field before confirming. Customers and products must match existing records; quantity must be positive and amount nonnegative. Saved OCR sales currently default to Credit. CSV imports replace existing files, so back up records first.
 
-## 🛡️ Security & Reliability
-- **Deterministic Calculations:** All financial math is performed by Pandas, not the LLM.
-- **Privacy:** The configured cloud model may send business summaries and uploaded images to a remote provider. Do not use sensitive data without reviewing the model and provider settings.
-- **Validation:** CSV imports are validated for numeric types to prevent crashes.
+## Tests
+In an isolated demo copy:
+```bash
+pip install pytest
+python generate_data.py
+python -m pytest -q
+```
+The generator replaces demo CSVs; do not run it over real shop records. Four ledger calculation tests pass. Live model responses and physical camera capture require further verification.
 
-## 📝 Limitations
-- Currently supports CSV imports only (Image-to-text OCR is experimental).
-- Requires Ollama to be running locally for the AI Copilot to function.
-
-**Current limitations:** OCR extraction requires human review before saving. Customers and products must already exist; reviewed OCR sales are recorded as credit. CSV imports overwrite the local data files; back up your records first. The cloud model requires connectivity and may be unavailable.
+See [CLAUDE.md](CLAUDE.md) for the developer guide. Private CSVs, credentials, caches, and virtual environments are excluded from Git.

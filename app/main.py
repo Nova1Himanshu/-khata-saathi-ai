@@ -101,12 +101,16 @@ engine = load_engine()
 # --- NAVIGATION ---
 st.sidebar.title("📖 KhataSaathi AI")
 st.sidebar.markdown("---")
-page = st.sidebar.radio("Navigation", ["Dashboard", "Customer Credit", "Inventory", "AI Copilot", "Register OCR", "Data Import"])
+def open_scanner():
+    st.session_state.navigation = "Register OCR"
+
+page = st.sidebar.radio("Navigation", ["Dashboard", "Customer Credit", "Inventory", "AI Copilot", "Register OCR", "Data Import"], key="navigation")
 
 # --- PAGES ---
 
 if page == "Dashboard":
     st.title("🏪 Business Dashboard")
+    st.button("📸 Quick Scan Ledger", on_click=open_scanner, type="primary")
     metrics = engine.get_dashboard_metrics()
 
     col1, col2, col3, col4 = st.columns(4)
@@ -175,10 +179,14 @@ if page == "AI Copilot":
                 st.session_state.messages.append({"role": "assistant", "content": response})
 
 if page == "Register OCR":
-    st.title("📸 Register-to-Digital (Experimental)")
+    st.title("📸 Smart Register Scan")
     st.write("Upload a photo of your handwritten register to extract transactions.")
 
-    uploaded_file = st.file_uploader("Upload Register Image", type=["jpg", "jpeg", "png"])
+    source = st.radio("Image source", ["Upload photo", "Use camera"], horizontal=True)
+    if source == "Use camera":
+        uploaded_file = st.camera_input("Take a photo of your register")
+    else:
+        uploaded_file = st.file_uploader("Upload Register Image", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
         image = Image.open(uploaded_file)
