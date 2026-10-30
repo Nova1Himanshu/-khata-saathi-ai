@@ -1,3 +1,7 @@
+import sys
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -23,6 +27,18 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- UTILS ---
+
+def ensure_data_exists():
+    import os
+    from generate_data import generate_synthetic_data
+    paths = [ROOT / 'data' / name for name in ['customers.csv', 'inventory.csv', 'sales.csv', 'payments.csv']]
+    if not any(path.exists() for path in paths):
+        (ROOT / 'data').mkdir(exist_ok=True)
+        for path, frame in zip(paths, generate_synthetic_data()):
+            frame.to_csv(path, index=False)
+    elif not all(path.exists() for path in paths):
+        raise ValueError('Some ledger files are missing. Restore all four CSV files; existing records will not be overwritten.')
+
 
 def query_gemma(prompt, engine):
     metrics = engine.get_dashboard_metrics()
@@ -72,11 +88,12 @@ def query_gemma(prompt, engine):
 # --- DATA LOADING ---
 @st.cache_resource
 def load_engine():
+    ensure_data_exists()
     return KhataEngine(
-        'data/customers.csv',
-        'data/inventory.csv',
-        'data/sales.csv',
-        'data/payments.csv'
+        ROOT / 'data' / 'customers.csv',
+        ROOT / 'data' / 'inventory.csv',
+        ROOT / 'data' / 'sales.csv',
+        ROOT / 'data' / 'payments.csv'
     )
 
 engine = load_engine()
@@ -170,7 +187,7 @@ if page == "Register OCR":
         if st.button("Extract Transactions"):
             with st.spinner("Gemma 4 Vision is analyzing handwriting..."):
                 img_byte_arr = io.BytesIO()
-                image.save(img_byte_arr, format='JPEG')
+                image.convert('RGB').save(img_byte_arr, format='JPEG')
                 img_bytes = img_byte_arr.getvalue()
 
                 try:
@@ -188,19 +205,66 @@ if page == "Register OCR":
                         timeout=60
                     )
 
+                    response.raise_for_status()
                     result_json = json.loads(response.json().get('response', '[]'))
 
-                    st.subheader("📝 Extracted Data (Review Required)")
-                    st.warning("Please verify AI-extracted data before importing to your records.")
-
-                    df_extracted = pd.DataFrame(result_json)
-                    edited_df = st.data_editor(df_extracted)
-
-                    if st.button("Confirm and Import to Sales"):
-                        st.success("Transactions successfully added to the ledger!")
-
+                    st.session_state.ocr_rows = pd.DataFrame(result_json)
                 except Exception as e:
                     st.error(f"Vision extraction failed: {str(e)}")
+
+    if "ocr_rows" in st.session_state:
+        try:
+            st.subheader("📝 Extracted Data (Review Required)")
+            st.warning("Please verify AI-extracted data before importing to your records.")
+    
+            edited_df = st.data_editor(st.session_state.ocr_rows)
+    
+            if st.button("Confirm and Import to Sales"):
+                # Convert edited_df to the sales CSV format
+                # Expected columns in sales.csv: transaction_id, date, customer_id, product_id, quantity, total_amount, payment_mode
+    
+                # We map the AI extracted fields to CSV columns
+                import time
+                sales_df = pd.read_csv(ROOT / 'data' / 'sales.csv')
+    
+                new_entries = []
+                for _, row in edited_df.iterrows():
+                    # Try to find customer_id by name
+                    cust_df = pd.read_csv(ROOT / 'data' / 'customers.csv')
+                    cust_match = cust_df[cust_df['name'] == row['customer_name']]
+                    cid = int(cust_match['customer_id'].values[0]) if not cust_match.empty else None
+    
+                    # Try to find product_id by name
+                    inv_df = pd.read_csv(ROOT / 'data' / 'inventory.csv')
+                    prod_match = inv_df[inv_df['product_name'] == row['product']]
+                    pid = int(prod_match['product_id'].values[0]) if not prod_match.empty else None
+    
+                    if cid is None or pid is None:
+                        raise ValueError('Match every customer and product to an existing ledger entry before saving.')
+                    quantity = float(row['quantity'])
+                    amount = float(row['amount'])
+                    if not np.isfinite(quantity) or not np.isfinite(amount) or quantity <= 0 or amount < 0:
+                        raise ValueError('Quantity must be positive and amount must be nonnegative.')
+                    pd.to_datetime(row['date'], errors='raise')
+                    new_entries.append({
+                        'transaction_id': int(time.time() * 1000) + len(sales_df) + len(new_entries),
+                        'date': row['date'] if 'date' in row else datetime.now().strftime('%Y-%m-%d'),
+                        'customer_id': cid,
+                        'product_id': pid,
+                        'quantity': quantity,
+                        'total_amount': amount,
+                        'payment_mode': 'Credit' # Default OCR to credit for review
+                    })
+    
+                updated_sales = pd.concat([sales_df, pd.DataFrame(new_entries)], ignore_index=True)
+                updated_sales.to_csv(ROOT / 'data' / 'sales.csv', index=False)
+    
+                st.success("Transactions successfully added to the ledger!")
+                load_engine.clear()
+                del st.session_state.ocr_rows
+                st.rerun()
+        except Exception as e:
+            st.error(f"Import failed: {e}")
 
 if page == "Data Import":
     st.title("📤 Data Import")
@@ -213,14 +277,15 @@ if page == "Data Import":
 
     if st.button("Process and Save"):
         if uploaded_customers and uploaded_inventory and uploaded_sales and uploaded_payments:
-            with open('data/customers.csv', 'wb') as f:
+            with open(ROOT / 'data' / 'customers.csv', 'wb') as f:
                 f.write(uploaded_customers.getbuffer())
-            with open('data/inventory.csv', 'wb') as f:
+            with open(ROOT / 'data' / 'inventory.csv', 'wb') as f:
                 f.write(uploaded_inventory.getbuffer())
-            with open('data/sales.csv', 'wb') as f:
+            with open(ROOT / 'data' / 'sales.csv', 'wb') as f:
                 f.write(uploaded_sales.getbuffer())
-            with open('data/payments.csv', 'wb') as f:
+            with open(ROOT / 'data' / 'payments.csv', 'wb') as f:
                 f.write(uploaded_payments.getbuffer())
-            st.success("Data updated successfully! Please refresh the app.")
+            load_engine.clear()
+            st.success("Data updated successfully!")
         else:
             st.error("Please upload all four required CSV files.")

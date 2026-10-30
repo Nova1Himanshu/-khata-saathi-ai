@@ -20,31 +20,21 @@ KhataSaathi AI is an offline-first, AI-powered retail intelligence application d
 - **AI Engine:** Ollama + Gemma 4 (`gemma4:31b-cloud` or similar)
 - **Language:** Python 3.x
 
-## 📦 Installation & Setup
-
-### Prerequisites
-1. Install [Python 3.9+](https://www.python.org/)
-2. Install [Ollama](https://ollama.com/)
-3. Pull the Gemma 4 model:
+## 🚀 Quick Start (AI Setup)
+1. Install Python and [Ollama](https://ollama.com/).
+2. Prepare the configured model:
    ```bash
    ollama pull gemma4:31b-cloud
+   ollama run gemma4:31b-cloud
    ```
-
-### Setup
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Nova1Himanshu/-khata-saathi-ai.git
-   cd ./-khata-saathi-ai
-   ```
-2. Install dependencies:
+   Sign in to Ollama if prompted. This cloud model requires internet access.
+3. From the repository root, launch:
    ```bash
    pip install -r requirements.txt
-   ```
-3. Run the application:
-   ```bash
-   python generate_data.py
    streamlit run app/main.py
    ```
+   The app generates synthetic business data automatically when no ledger files exist.
+   Existing partial datasets must be restored rather than overwritten.
 
 ## 📊 Demo Script for Judges
 1. **Launch:** Open the app and show the **Dashboard**.
@@ -64,4 +54,4 @@ KhataSaathi AI is an offline-first, AI-powered retail intelligence application d
 - Currently supports CSV imports only (Image-to-text OCR is experimental).
 - Requires Ollama to be running locally for the AI Copilot to function.
 
-**Current limitations:** OCR import is a prototype and does not save extracted transactions. CSV imports overwrite the local data files; back up your records first. The cloud model requires connectivity and may be unavailable.
+**Current limitations:** OCR extraction requires human review before saving. Customers and products must already exist; reviewed OCR sales are recorded as credit. CSV imports overwrite the local data files; back up your records first. The cloud model requires connectivity and may be unavailable.
