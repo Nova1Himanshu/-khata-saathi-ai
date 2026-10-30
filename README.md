@@ -2,8 +2,10 @@
 
 **From handwritten registers to intelligent business decisions.**
 
-## Overview
-KhataSaathi AI helps small retailers understand sales, customer credit, payments, and inventory using a Streamlit dashboard and Gemma 4 through Ollama.
+ ## 🌟 Overview
+  KhataSaathi AI is an offline-first, AI-powered retail intelligence application designed for small Indian retailers. It transforms traditional ledger
+  records into actionable business insights using Google's Gemma 4 model.
+
 
 ## Key Features
 - **Smart Register Scan:** Capture a ledger photo using a camera or upload an image. Review and edit extracted transactions before saving them.
@@ -29,7 +31,8 @@ KhataSaathi AI helps small retailers understand sales, customer credit, payments
    ```bash
    streamlit run app/main.py
    ```
-   Sample business data is created automatically on an empty first run. Allow camera access when prompted; camera availability depends on the browser and device.
+ Note: The app automatically generates sample business data on the first
+  launch for immediate demo.
 
 ## OCR Review and Limits
 OCR is experimental. Verify every extracted field before confirming. Customers and products must match existing records; quantity must be positive and amount nonnegative. Saved OCR sales currently default to Credit. CSV imports replace existing files, so back up records first.
